@@ -60,6 +60,7 @@ COLLECTION_NAME = "demo_docs"
 
 client = None
 collection = None
+# https://realpython.com/chromadb-vector-database/
 def create_db():
     global client, collection
     client = chromadb.PersistentClient(path=CHROMA_DATA_PATH)
