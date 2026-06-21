@@ -78,7 +78,7 @@ def create_db():
         name=COLLECTION_NAME,
         embedding_function=embedding_func,
         metadata={"hnsw:space": "cosine"},
-        get_or_create=False,
+        get_or_create=True,
     )
 
 def add_chunks_to_db():
@@ -96,10 +96,5 @@ def init():
     os.chdir("../../../../")
     create_db()
     add_chunks_to_db()
-    for el in chunks:
-        print(el)
-        for i in range(4):
-            print()
-    print([{"name": chunks_names[i], "path": chunks_paths[i]} for i in range(len(chunks))])
 
 init()
