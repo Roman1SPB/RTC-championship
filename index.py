@@ -7,6 +7,8 @@ PATH_TO_PY_FILES = "dataset_case3_v1.0_fix/codebase_python/gymhero/gymhero"
 files_path = []
 chunks = []
 chunks_names = []
+chunks_paths = []
+current_py_file_path = None
 
 def is_python_file(file_name):
     return ".py" in file_name 
@@ -28,24 +30,29 @@ def searching_py_files(path):
 # https://earthly.dev/blog/python-ast/
 class FunctionCallVisitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
-        chunks.append(ast.dump(node))
+        chunks.append(ast.unparse(node))
         chunks_names.append(node.name)
+        chunks_paths.append(current_py_file_path)
         self.generic_visit(node)
     def visit_ClassDef(self, node):
-        chunks.append(ast.dump(node))
+        chunks.append(ast.unparse(node))
         chunks_names.append(node.name)
+        chunks_paths.append(current_py_file_path)
         self.generic_visit(node)
     def visit_AsyncFunctionDef(self, node):
-        chunks.append(ast.dump(node))
+        chunks.append(ast.unparse(node))
         chunks_names.append(node.name)
+        chunks_paths.append(current_py_file_path)
         self.generic_visit(node)
     # def visit_Lambda(self, node):
     #     chunks.append((node.name, ast.dump(node)))
     #     self.generic_visit(node)
 
 def make_chunks():
+    global current_py_file_path
     for file_path in files_path:
-        file = open(file_path, 'r')
+        current_py_file_path = file_path
+        file = open(current_py_file_path, 'r')
         code = ""
         for line in file:
             code += line 
@@ -56,7 +63,7 @@ def make_chunks():
 
 CHROMA_DATA_PATH = "chroma_data/"
 EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
-COLLECTION_NAME = "demo_docs"
+COLLECTION_NAME = "code_embs"
 
 client = None
 collection = None
@@ -71,7 +78,7 @@ def create_db():
         name=COLLECTION_NAME,
         embedding_function=embedding_func,
         metadata={"hnsw:space": "cosine"},
-        get_or_create=True,
+        get_or_create=False,
     )
 
 def add_chunks_to_db():
@@ -79,22 +86,8 @@ def add_chunks_to_db():
     collection.add(
         documents=chunks,
         ids=[f"id{i}" for i in range(len(chunks))],
-        metadatas=[{"name": name} for name in chunks_names]
+        metadatas=[{"name": chunks_names[i], "path": chunks_paths[i]} for i in range(len(chunks))],
     )
-
-def print_query_example():
-    global client, collection 
-    query_results = collection.query(
-        query_texts=["how does the project load configuration depending on the runtime environment?"],
-        n_results=3,
-    )
-
-    for query in query_results["documents"][0]:
-        print(query)
-        print()
-        print()
-
-    print(query_results["distances"])
 
 def init():     
     os.chdir(PATH_TO_PY_FILES)
@@ -103,6 +96,10 @@ def init():
     os.chdir("../../../../")
     create_db()
     add_chunks_to_db()
-    print_query_example()
+    for el in chunks:
+        print(el)
+        for i in range(4):
+            print()
+    print([{"name": chunks_names[i], "path": chunks_paths[i]} for i in range(len(chunks))])
 
 init()
