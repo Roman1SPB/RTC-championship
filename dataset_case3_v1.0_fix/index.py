@@ -6,42 +6,23 @@ import json
 import numpy as np
 import chromadb
 from chromadb.utils import embedding_functions
+import tree_sitter_java as tsjava
+from tree_sitter import Language, Parser, Node
 
 with zipfile.ZipFile("codebase_python.zip", "r") as z:
     z.extractall(".")
 
-def extract_chunks(py_file: Path, repo_root: Path):
-    """Extract chunk_ids from a Python file using AST."""
-    rel = py_file.relative_to(repo_root).as_posix()
-    src = py_file.read_text(encoding="utf-8", errors="replace")
-    tree = ast.parse(src)
-    
-    chunks = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            chunk_id = f"{rel}:{node.name}:{node.lineno}"
-            chunks.append(chunk_id)
-            # Methods inside the class
-            for item in ast.walk(node):
-                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    method_id = f"{rel}:{node.name}.{item.name}:{item.lineno}"
-                    chunks.append(method_id)
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            # Top-level functions (check not inside a class)
-            chunk_id = f"{rel}:{node.name}:{node.lineno}"
-            chunks.append(chunk_id)
-    
-    return chunks
-
+with zipfile.ZipFile("codebase_java.zip", "r") as z:
+    z.extractall(".")
 
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")  # пример — выберите модель самостоятельно
-
-repo_root = Path("gymhero")
-index = {}  # chunk_id -> embedding
+repo_py_root = Path("gymhero")
+repo_java_root = Path("qrcode-generator-master")
+index = {}
 code_chunks = []
 
-for py_file in repo_root.rglob("*.py"):
-    rel = py_file.relative_to(repo_root).as_posix()
+for py_file in repo_py_root.rglob("*.py"):
+    rel = py_file.relative_to(repo_py_root).as_posix()
     src = py_file.read_text(encoding="utf-8", errors="replace")
     try:
         tree = ast.parse(src)
@@ -61,6 +42,52 @@ for py_file in repo_root.rglob("*.py"):
             code_chunks.append(chunk_text)
             embedding = model.encode(chunk_text)
             index[chunk_id] = embedding
+print(f"Indexed {len(index)} chunks")
+for java_file in repo_java_root.rglob("*.java"):
+    JAVA_LANGUAGE = Language(tsjava.language())
+    parser = Parser(JAVA_LANGUAGE)
+    rel = java_file.relative_to(repo_java_root).as_posix()
+    src = java_file.read_text(encoding="utf-8", errors="replace")
+    src_bytes = src.encode('utf-8')
+    
+    try:
+        tree = parser.parse(src_bytes)
+    except SyntaxError:
+        continue
+    
+    cursor = tree.walk()
+    reached_root = False
+
+    TARGETS = {
+        "class_declaration", 
+        "interface_declaration", 
+        "method_declaration", 
+        "constructor_declaration", 
+    }
+
+    while not reached_root:
+        current_node = cursor.node
+        
+        if current_node.grammar_name in TARGETS:
+            name_node = current_node.child_by_field_name("name")
+            if name_node:
+                entity_name = src_bytes[name_node.start_byte:name_node.end_byte].decode('utf-8', errors='replace')
+                chunk_text = src_bytes[current_node.start_byte:current_node.end_byte].decode('utf-8', errors='replace')
+                chunk_id = f"{rel}:{entity_name}:{current_node.start_byte}"
+                
+                code_chunks.append(chunk_text)
+                embedding = model.encode(chunk_text)
+                index[chunk_id] = embedding
+        if cursor.goto_first_child():
+            continue
+        if cursor.goto_next_sibling():
+            continue
+        while True:
+            if not cursor.goto_parent():
+                reached_root = True
+                break
+            if cursor.goto_next_sibling():
+                break
 
 print(f"Indexed {len(index)} chunks")
 
