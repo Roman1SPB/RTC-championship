@@ -1,0 +1,13 @@
+
+services:
+  app:
+    build: .
+    container_name: gymhero-rag
+    ports:
+      - "8501:8501"
+    volumes:
+      # Монтируем папку с хромовой базой, чтобы данные сохранялись между перезапусками
+      - ./chroma_data:/app/chroma_data
+      # При необходимости можно смонтировать и сам код, чтобы изменения применялись без пересборки
+      # - .:/app
+    restart: unless-stopped
