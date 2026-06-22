@@ -1,77 +1,38 @@
-import streamlit as st
-import chromadb
-from sentence_transformers import SentenceTransformer
-from llm import get_llm_explanation
+import base64
+from openai import OpenAI
 
-CHROMA_DATA_PATH = "chroma_data/"
-EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
-COLLECTION_NAME = "code_embs"
+ENCODED_KEY = "c2stb3ItdjEtMDA5ZmY3ODMyZTFjMGFkZjYwZjA2M2MxYzlhZTUyNGQyYTI2Y2U0Mzg2NmM0MmU1ZWQ2NDY1YzY5MTRhMTU5MA=="
+DECODED_KEY = base64.b64decode(ENCODED_KEY).decode("utf-8")
 
-st.title("Поиск по коду") #отображает заголовок
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=DECODED_KEY
+)
 
-@st.cache_resource # кеширует результат работы функции load_resources()
-def load_resources():
-    client = chromadb.PersistentClient(path=CHROMA_DATA_PATH)
-    collection = client.get_collection(name=COLLECTION_NAME) #берем фрагменты кода code_embs
-    model = SentenceTransformer(EMBED_MODEL)
-    return collection, model
-
-try:
-    collection, model = load_resources()
-except Exception as e:
-    st.error("Сначала запусти: python index.py")
-    st.stop()
-
-# --- хранилище последних найденных фрагментов ---
-if "last_search" not in st.session_state:
-    st.session_state.last_search = None
-
-# блок отдельного поиска
-with st.expander("Поиск по коду (без объяснений LLM)", expanded=False): #создаем раскрывающийся блок
-    search_query = st.text_input("Введите запрос для поиска фрагментов", key="search_input_unique") #поле ввода запроса
-    if st.button("Найти фрагменты", key="search_btn_unique"): #кнопка запуска поиска.Ключ нужен чтобы не код не перепутал,какая кнопка нажата
-        if search_query: #если запрос не пустой
-            vec = model.encode(search_query).tolist() #превращаем его в вектор
-            res = collection.query(query_embeddings=[vec], n_results=3) #ищем похожие фрагменты в базе
-            # сохраняем результаты в session_state
-            st.session_state.last_search = (
-                res["documents"][0],
-                res["metadatas"][0],
-                res["distances"][0]
-            )
-            for doc, meta, dist in zip(res["documents"][0], res["metadatas"][0], res["distances"][0]):
-                st.code(doc, language="python")
-                st.caption(f"Релевантность: {round((1-dist)*100)}% | {meta.get('info', '')}")
-                st.divider() #выводим все результаты
-
-# чат с LLM
-if "messages" not in st.session_state: #инициализация истории чата
-    st.session_state.messages = []
-
-for message in st.session_state.messages: #отображение всех предыдущих сообщений
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-if prompt := st.chat_input("Введи вопрос о коде"):#ждем ввод от пользователя.Текст попадает в переменную prompt
-    st.session_state.messages.append({"role": "user", "content": prompt}) #Добавление вопроса пользователя в историю и его отображение
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # используем сохранённые результаты, а не новый поиск
-    if st.session_state.last_search is None:
-        st.warning("Сначала найдите фрагменты кода через верхний блок поиска.")
-        st.stop()
-
-    documents, metadatas, distances = st.session_state.last_search
-
-    # Фрагменты уже показаны сверху, в чате их не выводим (убрал expander)
-    top_n = 3 #подготовка контекста для llm
-    code_chunks = documents[:top_n]
-    chunk_names = [metadatas[i].get('info', 'Без имени') for i in range(top_n)]
-
-    with st.spinner("Генерирую объяснение..."):#генерация объяснения
-        explanation = get_llm_explanation(prompt, code_chunks, chunk_names)
-
-    st.session_state.messages.append({"role": "assistant", "content": explanation})#добавление ответа в историю и отображение
-    with st.chat_message("assistant"):
-        st.markdown(explanation)
+def get_llm_explanation(user_query: str, code_chunks: list, chunk_names: list) -> str:
+    try:
+        context_blocks = [f"функция/класс: {name} \n{code}" for name, code in zip(chunk_names, code_chunks)]
+        full_context = "\n\n".join(context_blocks)
+        
+        prompt = f"""Ты — ИИ-ассистент разработчика. Ниже ты получишь вопрос от пользователя\
+            и N фрагментов кода, которые расположены в порядке убывания релевантности(совпадения с вопросом)\
+                объясни каждый пример кода
+ВОПРОС: {user_query}
+КОНТЕКСТ: {full_context}
+ОТВЕТ:"""
+        
+        response = client.chat.completions.create(
+            model="openrouter/owl-alpha",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        )
+        
+        if hasattr(response, 'error') and response.error:
+            return f"Ошибка от OpenRouter: {response.error.get('message', str(response.error))}"
+        
+        if hasattr(response, 'choices') and response.choices and len(response.choices) > 0:
+            return response.choices[0].message.content
+        else:
+            return f"Неожиданный ответ от LLM: {response}"
+    except Exception as e:
+        return f"Ошибка при обращении к LLM: {str(e)}"
