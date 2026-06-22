@@ -14,9 +14,11 @@ def get_llm_explanation(user_query: str, code_chunks: list, chunk_names: list) -
         context_blocks = [f"функция/класс: {name} \n{code}" for name, code in zip(chunk_names, code_chunks)]
         full_context = "\n\n".join(context_blocks)
         
-        prompt = f"""Ты — ИИ-ассистент разработчика. Ответь на вопрос по коду проекта.
-КОНТЕКСТ: {full_context}
+        prompt = f"""Ты — ИИ-ассистент разработчика. Ниже ты получишь вопрос от пользователя\
+            и N фрагментов кода, которые расположены в порядке убывания релевантности(совпадения с вопросом)\
+                объясни каждый пример кода
 ВОПРОС: {user_query}
+КОНТЕКСТ: {full_context}
 ОТВЕТ:"""
         
         response = client.chat.completions.create(

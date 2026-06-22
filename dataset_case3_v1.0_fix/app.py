@@ -38,9 +38,13 @@ if search and query:
         relevance = round((1 - dist) * 100)
         name = meta.get('info', 'Без имени')
         st.markdown(f"**#{i+1} — {name}** | Релевантность: **{relevance}%**")
-        st.code(doc, language="python")
+        if ("java" in name):
+            st.code(doc, language="java")
+        if ("py" in name):
+            st.code(doc, language="python")
+        
         st.divider()
-    top_n = 3
+    top_n = 5
     code_chunks = documents[:top_n]
     chunk_names = [
         (metadatas[i].get('info', 'Без имени'))
