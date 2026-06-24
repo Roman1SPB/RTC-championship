@@ -1,0 +1,9 @@
+streamlit
+chromadb
+sentence-transformers
+openai
+python-dotenv
+torchvision
+tree_sitter
+tree_sitter_java
+rank_bm25
