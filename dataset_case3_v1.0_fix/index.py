@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 import tree_sitter_java as tsjava
 from tree_sitter import Language, Parser
+import zipfile
 
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")  # пример — выберите модель самостоятельно
 index = {}
@@ -92,10 +93,16 @@ collection = client.create_collection(
     metadata={"hnsw:space": "cosine"},
 )
 
+with zipfile.ZipFile("codebase_java.zip", "r") as z:
+    z.extractall(".")
+with zipfile.ZipFile("codebase_python.zip", "r") as z:
+    z.extractall(".")
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Укажите хотя бы одну папку для индексации.")
         sys.exit(1)
+    
     index_folders(sys.argv[1:])
     collection.add(
         documents=code_chunks,
