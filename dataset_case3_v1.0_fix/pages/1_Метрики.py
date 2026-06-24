@@ -26,7 +26,7 @@ TARGET = 0.60
 
 st.set_page_config(page_title="Метрики — Precision@5", layout="wide")
 st.title("Качество поиска — Precision@5")
-st.caption("Метрика по eval_questions.json, официальная логика score.py (допуск ±2 строки).")
+st.caption("Метрика по eval_questions.json, логика score.py.")
 
 
 @st.cache_resource
@@ -40,7 +40,7 @@ def load_resources():
 try:
     collection, model = load_resources()
 except Exception:
-    st.error("База не найдена. Сначала запусти: `python index.py gymhero`")
+    st.error("База не найдена. Сначала необходимо запустить: `python index.py gymhero`")
     st.stop()
 
 questions = json.loads(Path(EVAL_PATH).read_text(encoding="utf-8"))
@@ -50,7 +50,7 @@ run = st.button("▶ Посчитать Precision@5", type="primary", use_contai
 if run:
     rows, latencies, scores = [], [], []
 
-    with st.spinner("Прогоняю 15 вопросов через поиск…"):
+    with st.spinner("Прогонка 15 вопросов через поиск"):
         for q in questions:
             t0 = time.perf_counter()
             vec = model.encode(q["query"]).tolist()
@@ -70,7 +70,7 @@ if run:
 
     mean = sum(scores) / len(scores)
 
-    # --- крупная метрика + статус ---
+    
     if mean >= TARGET:
         st.success(f"Precision@5 = {mean:.3f}  —  цель ≥ {TARGET:.0%} достигнута")
     else:
@@ -83,7 +83,7 @@ if run:
 
     st.divider()
 
-    # --- разбивки в виде столбчатых диаграмм ---
+    
     def agg(key: str) -> dict:
         d: dict = {}
         for q, s in zip(questions, scores):
@@ -102,7 +102,6 @@ if run:
 
     st.divider()
 
-    # --- таблица по вопросам с цветовой шкалой score ---
     st.subheader("Детально по вопросам")
     st.dataframe(
         rows,
@@ -115,4 +114,4 @@ if run:
         },
     )
 else:
-    st.info("Нажми кнопку, чтобы прогнать все 15 вопросов и увидеть метрику.")
+    st.info("Запуск метрики.")
