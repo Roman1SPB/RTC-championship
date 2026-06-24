@@ -6,6 +6,8 @@ import chromadb
 import tree_sitter_java as tsjava
 from tree_sitter import Language, Parser
 import zipfile
+import json
+import numpy as np
 
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")  # пример — выберите модель самостоятельно
 index = {}
@@ -69,6 +71,30 @@ def process_java_file(java_file, repo_root):
             if cursor.goto_next_sibling():
                 break
 
+def calculare_precision5():
+    questions = json.loads(Path("eval_questions.json").read_text(encoding="utf-8"))
+    results = []
+
+    for q in questions:
+        query_embedding = model.encode(q["query"])
+        
+        # Найти топ-5 по косинусному сходству
+        scores = {}
+        for chunk_id, emb in index.items():
+            similarity = np.dot(query_embedding, emb) / (
+                np.linalg.norm(query_embedding) * np.linalg.norm(emb) + 1e-9
+            )
+            scores[chunk_id] = similarity
+        
+        top5 = sorted(scores, key=scores.get, reverse=True)[:5]
+        results.append({"question_id": q["question_id"], "top_5_chunks": top5})
+
+    # Сохранить результаты
+    Path("results.json").write_text(
+        json.dumps(results, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+print("results.json saved")
 def index_folders(folders):
     for folder in folders:
         root = Path(folder)
@@ -110,4 +136,5 @@ if __name__ == "__main__":
         metadatas=[{"info": key} for key in index.keys()],
         ids=[f"id{i}" for i in range(len(index))],
     )
-print(f"Индексация завершена, загружено {len(index)} чанков."), 
+    print(f"Индексация завершена, загружено {len(index)} чанков."), 
+    calculare_precision5()
