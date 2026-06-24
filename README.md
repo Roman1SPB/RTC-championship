@@ -10,16 +10,19 @@
 
 ```text
 RTC-championship/
-└── dataset_case3_v1.0_fix/
-    ├── app.py                  # Веб-приложение на Streamlit
-    ├── index.py                # Парсинг кода, генерация эмбеддингов и сохранение в ChromaDB
-    ├── llm.py                  # Модуль взаимодействия с LLM (функции чата)
-    ├── score.py                # Скрипт валидации и подсчёта метрики Precision@5
-    ├── requirements.txt        # Список зависимостей Python
-    ├── .dockerignore           # Исключения для сборки Docker
-    ├── Dockerfile              # Инструкция сборки Docker-образа
-    ├── docker-compose.yml      # Конфигурация Docker Compose
-    └── sample_queries.txt      # Примеры поисковых запросов
+├── dataset_case3_v1.0_fix/
+│   ├── app.py                  # Веб-приложение на Streamlit
+│   ├── index.py                # Парсинг кода, генерация эмбеддингов и сохранение в ChromaDB
+│   ├── llm.py                  # Модуль взаимодействия с LLM (функции чата)
+│   ├── score.py                # Скрипт валидации и подсчёта метрики Precision@5
+│   ├── sample_queries.txt      # Примеры поисковых запросов
+│   ├── codebase_java.zip       # Исходный код qrcode-generator
+│   └── codebase_python.zip     # Исходный код gymhero
+├── requirements.txt            # Список необходимых Python библиотек
+├── dockerignore                # Исключения для сборки Docker
+├── Dockerfile                  # Инструкция сборки Docker-образа
+├── docker-compose.yml          # Конфигурация Docker Compose
+├── README                      # Описание проекта
 ```
 # Инструкция запуска
 
@@ -68,8 +71,8 @@ docker compose up --build
 ## Дополнительные 
 
 1. ✅LLM-ответы: чат-режим с генерацией связного ответа на основе найденных фрагментов. 
-2. ❌Гибридный поиск: комбинация векторного и полнотекстового с настраиваемым весом. 
-3. ❌Метрики качества: Precision@5 вычисляется и показывается на отдельной странице Streamlit. 
+2. ✅Гибридный поиск: комбинация векторного и полнотекстового с настраиваемым весом. 
+3. ✅Метрики качества: Precision@5 вычисляется и показывается на отдельной странице Streamlit. 
 4. ✅Поддержка второго языка (Java или JavaScript) через tree-sitter или регулярки. 
 5. ✅Docker Compose для запуска: docker compose up и всё работает.
 
