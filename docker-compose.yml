@@ -7,7 +7,7 @@ services:
       - "8501:8501"
     volumes:
       # Монтируем папку с хромовой базой, чтобы данные сохранялись между перезапусками
-      - ./chroma_data:/app/chroma_data
+      - ./dataset_case3_v1.0_fix/chroma_data:/app/chroma_data
       # При необходимости можно смонтировать и сам код, чтобы изменения применялись без пересборки
       # - .:/app
     restart: unless-stopped

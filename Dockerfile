@@ -12,4 +12,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 8501
-CMD python index.py gymero qrcode-generator-master && streamlit run app.py
+CMD cd dataset_case3_v1.0_fix && python index.py gymhero qrcode-generator-master && streamlit run app.py
