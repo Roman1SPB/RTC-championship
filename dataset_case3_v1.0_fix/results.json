@@ -13,10 +13,10 @@
     "question_id": "q_02",
     "top_5_chunks": [
       "gymhero/api/dependencies.py:get_token:35",
-      "gymhero/security.py:verify_password:38",
-      "gymhero/api/routes/auth.py:register:55",
-      "gymhero/exceptions.py:_get_credential_exception:5",
-      "gymhero/api/dependencies.py:get_current_user:58"
+      "java/src/main/java/com/d_project/qrcode/RSBlock.java:getDataCount:268",
+      "java/src/main/java/com/d_project/qrcode/RSBlock.java:getTotalCount:272",
+      "java/src/main/java/com/d_project/qrcode/web/QRCodeServlet.java:doGet:52",
+      "java/src/main/java/com/d_project/qrcode/QRCode.java:getModuleCount:153"
     ]
   },
   {
@@ -72,11 +72,11 @@
   {
     "question_id": "q_08",
     "top_5_chunks": [
+      "java/src/main/java/com/d_project/qrcode/QRCode.java:setupTimingPattern:327",
       "gymhero/schemas/level.py:LevelInDB:19",
       "gymhero/config.py:ContainerDevSettings:37",
       "gymhero/config.py:Settings:11",
-      "gymhero/schemas/user.py:UserOut:18",
-      "gymhero/api/routes/training_plan.py:create_training_plan:192"
+      "gymhero/schemas/user.py:UserOut:18"
     ]
   },
   {
@@ -85,8 +85,8 @@
       "gymhero/crud/base.py:CRUDRepository.create_with_owner:162",
       "gymhero/crud/base.py:CRUDRepository.create:87",
       "gymhero/crud/base.py:CRUDRepository.get_many_for_owner:189",
-      "gymhero/security.py:create_access_token:12",
-      "gymhero/crud/user.py:UserCRUDRepository.authenticate_user:67"
+      "python/qrcode.py:RSBlock.__repr__:768",
+      "python/qrcode.py:RSBlock:688"
     ]
   },
   {
@@ -96,7 +96,7 @@
       "gymhero/api/routes/auth.py:register:55",
       "gymhero/api/routes/auth.py:login_for_access_token:19",
       "gymhero/crud/user.py:UserCRUDRepository.authenticate_user:67",
-      "gymhero/security.py:verify_password:38"
+      "java/src/main/java/com/d_project/qrcode/web/QRCodeServlet.java:doGet:52"
     ]
   },
   {

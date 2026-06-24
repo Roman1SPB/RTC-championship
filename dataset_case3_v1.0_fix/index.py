@@ -34,9 +34,10 @@ except Exception:
 EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 CHROMA_DATA_PATH = "chroma_data/"
 COLLECTION_NAME = "code_embs"
+# если папки нет на диске — распакуем соответствующий архив
+ZIP_MAP = {"gymhero": "codebase_python.zip", "qrcode-generator-master": "codebase_java.zip"}
 
 
-# ─────────────────────────── Python: нарезка ───────────────────────────
 def _src_lines(node, lines, with_decorators=True):
     start = node.lineno
     if with_decorators and getattr(node, "decorator_list", None):
@@ -93,7 +94,6 @@ def extract_python_chunks(py_file: Path, repo_root: Path):
     return out
 
 
-# ─────────────────────────── Java: нарезка (tree-sitter) ───────────────────────────
 def extract_java_chunks(java_file: Path, repo_root: Path):
     if not _JAVA_OK:
         return []
@@ -130,11 +130,16 @@ def extract_java_chunks(java_file: Path, repo_root: Path):
     return out
 
 
-# ─────────────────────────── Основной процесс ───────────────────────────
 def collect_chunks(folders):
     chunks = []
     for folder in folders:
         root = Path(folder)
+        if not root.exists():
+            zip_name = ZIP_MAP.get(root.name)
+            if zip_name and Path(zip_name).exists():
+                print(f"Распаковываю {zip_name} -> {root.name}/")
+                with zipfile.ZipFile(zip_name) as z:
+                    z.extractall(".")
         if not root.exists():
             print(f"Папка не найдена, пропуск: {root}")
             continue
@@ -175,14 +180,13 @@ def main():
         documents=[c["document"] for c in chunks],
         embeddings=[e.tolist() for e in embeddings],
         metadatas=[{
-            "chunk_id": c["chunk_id"], "info": c["chunk_id"],  # info — для совместимости с app.py
+            "chunk_id": c["chunk_id"], "info": c["chunk_id"],  
             "path": c["path"], "name": c["name"], "kind": c["kind"],
             "start_line": c["start_line"],
         } for c in chunks],
     )
     print(f"Сохранено в ChromaDB: {collection.count()} чанков -> {CHROMA_DATA_PATH}")
 
-    # results.json для score.py
     if Path("eval_questions.json").exists():
         questions = json.loads(Path("eval_questions.json").read_text(encoding="utf-8"))
         results = []
