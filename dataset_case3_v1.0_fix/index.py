@@ -31,7 +31,7 @@ try:
 except Exception:
     _JAVA_OK = False
 
-EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+EMBED_MODEL = "paraphrase-multilingual-mpnet-base-v2"
 CHROMA_DATA_PATH = "chroma_data/"
 COLLECTION_NAME = "code_embs"
 # если папки нет на диске — распакуем соответствующий архив

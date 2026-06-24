@@ -13,7 +13,7 @@ from llm import get_llm_explanation
 from score import score_question
 
 CHROMA_DATA_PATH = "chroma_data/"
-EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+EMBED_MODEL = "paraphrase-multilingual-mpnet-base-v2"
 COLLECTION_NAME = "code_embs"
 EVAL_PATH = "eval_questions.json"
 TARGET = 0.60
