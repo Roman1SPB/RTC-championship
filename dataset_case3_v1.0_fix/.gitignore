@@ -1,0 +1,15 @@
+# Генерируемые артефакты
+__pycache__/
+*.pyc
+*.pyo
+chroma_data/
+results.json
+
+# Распаковываемые из zip кодовые базы
+gymhero/
+qrcode-generator-master/
+
+# Окружение
+.venv/
+venv/
+.env
