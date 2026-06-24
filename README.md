@@ -11,6 +11,7 @@
 ```text
 RTC-championship/
 ├── dataset_case3_v1.0_fix/
+│   ├── pages/1_Метрики.py      # Страница с Precision@5 на Streamlit
 │   ├── app.py                  # Веб-приложение на Streamlit
 │   ├── index.py                # Парсинг кода, генерация эмбеддингов и сохранение в ChromaDB
 │   ├── llm.py                  # Модуль взаимодействия с LLM (функции чата)

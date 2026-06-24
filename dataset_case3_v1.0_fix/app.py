@@ -11,7 +11,7 @@ EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 COLLECTION_NAME = "code_embs"
 
 st.title("Поиск по коду") #отображает заголовок
-
+st.set_page_config(page_title="CodeLens RAG")
 st.sidebar.header("Настройки гибридного поиска")
 alpha = st.sidebar.slider("Вес векторного поиска (α)", 0.0, 1.0, 0.7, 0.05)
 st.sidebar.caption("α = 1.0: только семантика\nα = 0.0: только точные слова (BM25)")
@@ -58,7 +58,7 @@ with st.expander("Поиск по коду (без объяснений LLM)", e
     if st.button("Найти фрагменты", key="search_btn_unique"): #кнопка запуска поиска.Ключ нужен чтобы не код не перепутал,какая кнопка нажата
         if search_query: #если запрос не пустой
             vec = model.encode(search_query).tolist() #превращаем его в вектор
-            res = collection.query(query_embeddings=[vec], n_results=3) #ищем похожие фрагменты в базе
+            res = collection.query(query_embeddings=[vec], n_results=5) #ищем похожие фрагменты в базе
             # сохраняем результаты в session_state
             st.session_state.last_search = (
                 res["documents"][0],
@@ -66,7 +66,11 @@ with st.expander("Поиск по коду (без объяснений LLM)", e
                 res["distances"][0]
             )
             for doc, meta, dist in zip(res["documents"][0], res["metadatas"][0], res["distances"][0]):
-                st.code(doc, language="python")
+                metainfo = meta.get("info")
+                if (".py" in metainfo):
+                    st.code(doc, language="python")
+                if (".java" in metainfo):
+                    st.code(doc, language="java")
                 st.caption(f"Релевантность: {round((1-dist)*100)}% | {meta.get('info', '')}")
                 st.divider() #выводим все результаты
 
